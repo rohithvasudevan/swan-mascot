@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Swan Mascot</title>
+  <style>
+    body {
+      margin: 0;
+      background: #cceeff;
+      overflow: hidden;
+    }
+    #swan {
+      position: absolute;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      transition: left 0.2s ease;
+      width: 150px;
+    }
+  </style>
+</head>
+<body>
+  <img id="swan" src="swan.png" alt="Swan Mascot">
+  <script>
+    const swan = document.getElementById('swan');
+    let center = window.innerWidth / 2;
+
+    window.addEventListener('mousemove', e => {
+      if (e.clientX < center) {
+        swan.style.left = (50 - Math.min(20, (center - e.clientX)/20)) + '%';
+        swan.style.transform = 'scaleX(-1)'; // face left
+      } else {
+        swan.style.left = (50 + Math.min(20, (e.clientX - center)/20)) + '%';
+        swan.style.transform = 'scaleX(1)'; // face right
+      }
+    });
+  </script>
+</body>
+</html>
