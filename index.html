@@ -22,18 +22,15 @@
 <body>
   <img id="swan" src="swan.png" alt="Swan Mascot">
   <script>
-    const swan = document.getElementById('swan');
-    let center = window.innerWidth / 2;
+const swan = document.getElementById("swan"); // your mascot image
 
-    window.addEventListener('mousemove', e => {
-      if (e.clientX < center) {
-        swan.style.left = (50 - Math.min(20, (center - e.clientX)/20)) + '%';
-        swan.style.transform = 'scaleX(-1)'; // face left
-      } else {
-        swan.style.left = (50 + Math.min(20, (e.clientX - center)/20)) + '%';
-        swan.style.transform = 'scaleX(1)'; // face right
-      }
-    });
-  </script>
+document.addEventListener("mousemove", (event) => {
+    const x = event.clientX;
+    const y = event.clientY;
+    swan.style.left = x + "px";
+    swan.style.top = y + "px";
+});
+</script>
+
 </body>
 </html>
