@@ -13,6 +13,7 @@
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
+    height:100%;
   }
   .feed-title {
     font-size: 28px;
@@ -50,7 +51,7 @@
     color: #333;
   }
 
-  .swanWrap {
+  #swanWrap {
     position:absolute;
     bottom:8px;
     left:50%;
@@ -66,11 +67,10 @@
     50% { transform:translateX(-50%) translateY(-8px); }
     100% { transform:translateX(-50%) translateY(0); }
   }
-  .swanImg {
+  #swanImg {
     width:120px;
     display:block;
     transition:transform .22s linear;
-  }
 
 </style>
 </head>
@@ -104,11 +104,6 @@
   }, {passive:true});
   window.addEventListener('resize', () => { lastX = window.innerWidth/2; });
 })();
-  const swan = document.getElementById('swan');
-  document.addEventListener('mousemove', (e) => {
-    swan.style.left = (e.pageX - 50) + 'px';
-    swan.style.top = (e.pageY - 50) + 'px';
-  });
 </script>
 <script>
 const FEED = 'https://www.medtechdive.com/feeds/news';
