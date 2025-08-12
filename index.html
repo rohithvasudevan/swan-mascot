@@ -49,12 +49,67 @@
     line-height: 1.5;
     color: #333;
   }
+
+  .swanWrap {
+    position:absolute;
+    bottom:8px;
+    left:50%;
+    transform:translateX(-50%);
+    transition:left .35s cubic-bezier(.2,.8,.2,1);
+    width:120px;
+    height:80px;
+    pointer-events:none;
+    animation: bob 4s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0% { transform:translateX(-50%) translateY(0); }
+    50% { transform:translateX(-50%) translateY(-8px); }
+    100% { transform:translateX(-50%) translateY(0); }
+  }
+  .swanImg {
+    width:120px;
+    display:block;
+    transition:transform .22s linear;
+  }
+
 </style>
 </head>
 <body>
 <div class="feed-title">MedTech Dive: Latest Medical Device News</div>
 <div id="feed">Loading news...</div>
+  <div id="swanWrap">
+      <img id="swanImg" src="swan.png" alt="Swan Mascot">
+    </div>
+<script>
+/*(function(){
+  const wrap = document.getElementById('swanWrap');
+  const swan = document.getElementById('swanImg');
+  let lastX = window.innerWidth/2;
+  let leftPct = 50;
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 
+  function onMove(clientX){
+    const delta = clientX - lastX;
+    if(Math.abs(delta) < 4){ lastX = clientX; return; }
+    swan.style.transform = (delta < 0) ? 'scaleX(-1)' : 'scaleX(1)';
+    leftPct += (delta / window.innerWidth) * 100 * 0.8;
+    leftPct = clamp(leftPct, 6, 94);
+    wrap.style.left = leftPct + '%';
+    lastX = clientX;
+  }
+
+  document.addEventListener('mousemove', e => onMove(e.clientX), {passive:true});
+  document.addEventListener('touchmove', e => {
+    if(e.touches && e.touches[0]) onMove(e.touches[0].clientX);
+  }, {passive:true});
+  window.addEventListener('resize', () => { lastX = window.innerWidth/2; });
+})();*/
+  const swan = document.getElementById('swan');
+  document.addEventListener('mousemove', (e) => {
+    swan.style.left = (e.pageX - 50) + 'px';
+    swan.style.top = (e.pageY - 50) + 'px';
+  });
+</script>
 <script>
 const FEED = 'https://www.medtechdive.com/feeds/news';
 const PROXY = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(FEED);
