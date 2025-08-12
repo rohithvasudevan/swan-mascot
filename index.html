@@ -1,140 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Swan + RSS Feed</title>
+<meta charset="utf-8"/>
+<title>MedTech Dive-style RSS Feed</title>
 <style>
   body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
     margin: 0;
-    padding: 0;
-    background: #f0f0f0;
-    overflow-x: hidden;
-  }
-  #rss {
     padding: 20px;
-    max-width: 800px;
-    margin: auto;
-    background: white;
-    box-shadow: 0 0 8px rgba(0,0,0,0.2);
+    background: #f5f5f5;
   }
-  #rss h2 {
-    margin-top: 0;
-    color: #333;
-  }
-  .rss-item {
+  .item {
     display: flex;
-    align-items: flex-start;
-    margin-bottom: 15px;
+    gap: 15px;
+    margin-bottom: 24px;
     border-bottom: 1px solid #ddd;
-    padding-bottom: 10px;
+    padding-bottom: 16px;
   }
-  .rss-item img {
-    max-width: 120px;
-    height: auto;
-    margin-right: 10px;
+  .item img {
+    width: 120px;
+    height: 80px;
     object-fit: cover;
+    flex-shrink: 0;
   }
-  .rss-item-content {
+  .text {
     flex: 1;
   }
-  .rss-item-content a {
-    font-size: 18px;
+  .text h3 {
+    margin: 0 0 4px;
+    font-size: 20px;
     font-weight: bold;
-    text-decoration: none;
-    color: #0066cc;
+    line-height: 1.2;
   }
-  .rss-item-content a:hover {
-    text-decoration: underline;
+  .text .meta {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
   }
-  .rss-item-content p {
-    margin: 5px 0 0;
-    color: #444;
-    font-size: 14px;
-    line-height: 1.4em;
-  }
-
-  /* Swan styling */
-  #swan {
-    position: fixed;
-    bottom: 20px; /* stays near bottom of page */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    pointer-events: none;
-    transition: left 0.3s ease;
-    z-index: 9999;
+  .text p {
+    margin: 0;
+    font-size: 15px;
+    color: #333;
   }
 </style>
 </head>
 <body>
-
-<!-- Swan image -->
-<img src="https://github.com/rohithvasudevan/swan-mascot/blob/main/swan.png" id="swan" alt="Swan">
-
-<!-- RSS feed -->
-<div id="rss">
-  <h2>Medical Devices News</h2>
-  <p>Loading feed...</p>
-</div>
+<div id="feed">Loading news...</div>
 
 <script>
-// ===== Swan movement only left/right =====
-const swan = document.getElementById('swan');
-document.addEventListener('mousemove', (e) => {
-  const pageWidth = window.innerWidth;
-  const percentX = e.clientX / pageWidth;
-  const moveX = percentX * (pageWidth - 80); // 80 = swan width
-  swan.style.left = moveX + "px";
-});
+const FEED = 'https://www.medtechdive.com/feeds/news';
+const PROXY = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(FEED);
 
-// ===== RSS fetching via public CORS proxy =====
-const FEED_URL = 'https://www.medtechdive.com/feeds/';
-const PROXY = 'https://api.allorigins.win/raw?url=';
-const requestUrl = PROXY + encodeURIComponent(FEED_URL);
+fetch(PROXY)
+  .then(r => r.text())
+  .then(str => new DOMParser().parseFromString(str, 'application/xml'))
+  .then(xml => {
+    const items = xml.querySelectorAll('item');
+    let html = '';
+    items.forEach((it, idx) => {
+      if(idx >= 10) return;
+      const title = it.querySelector('title')?.textContent || '';
+      const link = it.querySelector('link')?.textContent || '#';
+      const pub = it.querySelector('pubDate')?.textContent || '';
+      const desc = (it.querySelector('description')?.textContent || '').replace(/<[^>]*>/g, '').trim();
+      const snippet = desc.split(/\s+/).slice(0,30).join(' ') + '...';
+      const img = it.querySelector('media\\:content, enclosure')?.getAttribute('url') || '';
 
-fetch(requestUrl)
-  .then(res => res.text())
-  .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
-  .then(data => {
-    const items = data.querySelectorAll("item");
-    let output = '<h2>Medical Devices News</h2>';
-    items.forEach((item, index) => {
-      if (index < 10) { // limit to 10 items
-        const title = item.querySelector("title")?.textContent || "";
-        const link = item.querySelector("link")?.textContent || "#";
-        let desc = item.querySelector("description")?.textContent || "";
-        desc = desc.replace(/<[^>]*>/g, "").substring(0, 200) + "..."; // remove HTML + shorten
-        
-        // Try to extract image if available
-        let imgUrl = "";
-        const enclosure = item.querySelector("enclosure");
-        if (enclosure && enclosure.getAttribute("url")) {
-          imgUrl = enclosure.getAttribute("url");
-        } else {
-          // Fallback: check for media:content
-          const mediaContent = item.getElementsByTagName("media:content")[0];
-          if (mediaContent && mediaContent.getAttribute("url")) {
-            imgUrl = mediaContent.getAttribute("url");
-          }
-        }
-
-        output += `<div class="rss-item">
-          ${imgUrl ? `<img src="${imgUrl}" alt="">` : ""}
-          <div class="rss-item-content">
-            <a href="${link}" target="_blank">${title}</a>
-            <p>${desc}</p>
-          </div>
-        </div>`;
-      }
+      html += `<div class="item">
+        ${img ? `<img src="${img}" alt="Thumbnail">` : ''}
+        <div class="text">
+          <h3><a href="${link}" target="_blank">${title}</a></h3>
+          <div class="meta">${pub}</div>
+          <p>${snippet}</p>
+        </div>
+      </div>`;
     });
-    document.getElementById("rss").innerHTML = output;
+    document.getElementById('feed').innerHTML = html || 'No items.';
   })
   .catch(err => {
-    document.getElementById("rss").innerHTML = "<p>Error loading feed.</p>";
     console.error(err);
+    document.getElementById('feed').innerText = 'Error loading feed.';
   });
 </script>
-
 </body>
 </html>
