@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>MedTech Dive-style RSS Feed</title>
+<title>MedTech Dive-style RSS Feed (No Images)</title>
 <style>
   body {
     font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -11,33 +11,29 @@
     background: #f5f5f5;
   }
   .item {
-    display: flex;
-    gap: 15px;
     margin-bottom: 24px;
     border-bottom: 1px solid #ddd;
     padding-bottom: 16px;
   }
-  .item img {
-    width: 120px;
-    height: 80px;
-    object-fit: cover;
-    flex-shrink: 0;
-  }
-  .text {
-    flex: 1;
-  }
-  .text h3 {
+  .item h3 {
     margin: 0 0 4px;
     font-size: 20px;
     font-weight: bold;
     line-height: 1.2;
   }
-  .text .meta {
+  .item h3 a {
+    text-decoration: none;
+    color: #004c97;
+  }
+  .item h3 a:hover {
+    text-decoration: underline;
+  }
+  .meta {
     font-size: 13px;
     color: #666;
     margin-bottom: 8px;
   }
-  .text p {
+  p {
     margin: 0;
     font-size: 15px;
     color: #333;
@@ -58,29 +54,8 @@ fetch(PROXY)
     const items = xml.querySelectorAll('item');
     let html = '';
     items.forEach((it, idx) => {
-      if(idx >= 10) return;
+      if(idx >= 10) return; // Limit to 10 items
       const title = it.querySelector('title')?.textContent || '';
       const link = it.querySelector('link')?.textContent || '#';
       const pub = it.querySelector('pubDate')?.textContent || '';
-      const desc = (it.querySelector('description')?.textContent || '').replace(/<[^>]*>/g, '').trim();
-      const snippet = desc.split(/\s+/).slice(0,30).join(' ') + '...';
-      const img = it.querySelector('media\\:content, enclosure')?.getAttribute('url') || '';
-
-      html += `<div class="item">
-        ${img ? `<img src="${img}" alt="Thumbnail">` : ''}
-        <div class="text">
-          <h3><a href="${link}" target="_blank">${title}</a></h3>
-          <div class="meta">${pub}</div>
-          <p>${snippet}</p>
-        </div>
-      </div>`;
-    });
-    document.getElementById('feed').innerHTML = html || 'No items.';
-  })
-  .catch(err => {
-    console.error(err);
-    document.getElementById('feed').innerText = 'Error loading feed.';
-  });
-</script>
-</body>
-</html>
+      const desc = (it.query
