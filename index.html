@@ -81,7 +81,7 @@
       <img id="swanImg" src="swan.png" alt="Swan Mascot">
     </div>
 <script>
-/*(function(){
+(function(){
   const wrap = document.getElementById('swanWrap');
   const swan = document.getElementById('swanImg');
   let lastX = window.innerWidth/2;
@@ -103,7 +103,7 @@
     if(e.touches && e.touches[0]) onMove(e.touches[0].clientX);
   }, {passive:true});
   window.addEventListener('resize', () => { lastX = window.innerWidth/2; });
-})();*/
+})();
   const swan = document.getElementById('swan');
   document.addEventListener('mousemove', (e) => {
     swan.style.left = (e.pageX - 50) + 'px';
