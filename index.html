@@ -41,12 +41,11 @@
   /* Swan styling */
   #swan {
     position: fixed;
-    bottom: 20px; /* stays near bottom of page */
-    left: 50%;
-    transform: translateX(-50%);
+    top: 0;
+    left: 0;
     width: 80px;
     pointer-events: none;
-    transition: left 0.3s ease;
+    transition: transform 0.1s linear;
     z-index: 9999;
   }
 </style>
@@ -63,13 +62,10 @@
 </div>
 
 <script>
-// ===== Swan movement only left/right =====
+// ===== Swan cursor tracking =====
 const swan = document.getElementById('swan');
 document.addEventListener('mousemove', (e) => {
-  const pageWidth = window.innerWidth;
-  const percentX = e.clientX / pageWidth;
-  const moveX = percentX * (pageWidth - 80); // 80 = swan width
-  swan.style.left = moveX + "px";
+  swan.style.transform = `translate(${e.pageX}px, ${e.pageY}px)`;
 });
 
 // ===== RSS fetching via public CORS proxy =====
