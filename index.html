@@ -41,11 +41,12 @@
   /* Swan styling */
   #swan {
     position: fixed;
-    top: 0;
-    left: 0;
+    bottom: 20px; /* stays near bottom of page */
+    left: 50%;
+    transform: translateX(-50%);
     width: 80px;
     pointer-events: none;
-    transition: transform 0.1s linear;
+    transition: left 0.3s ease;
     z-index: 9999;
   }
 </style>
@@ -53,7 +54,7 @@
 <body>
 
 <!-- Swan image -->
-<img src="https://github.com/rohithvasudevan/swan-mascot/blob/main/swan.png" id="swan" alt="Swan">
+<img src="swan.png" id="swan" alt="Swan">
 
 <!-- RSS feed -->
 <div id="rss">
@@ -62,10 +63,13 @@
 </div>
 
 <script>
-// ===== Swan cursor tracking =====
+// ===== Swan movement only left/right =====
 const swan = document.getElementById('swan');
 document.addEventListener('mousemove', (e) => {
-  swan.style.transform = `translate(${e.pageX}px, ${e.pageY}px)`;
+  const pageWidth = window.innerWidth;
+  const percentX = e.clientX / pageWidth;
+  const moveX = percentX * (pageWidth - 80); // 80 = swan width
+  swan.style.left = moveX + "px";
 });
 
 // ===== RSS fetching via public CORS proxy =====
