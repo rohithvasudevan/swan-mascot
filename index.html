@@ -22,30 +22,47 @@
     margin-top: 0;
     color: #333;
   }
-  #rss ul {
-    list-style: none;
-    padding-left: 0;
+  .rss-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
   }
-  #rss li {
-    margin: 8px 0;
-    font-size: 16px;
+  .rss-item img {
+    max-width: 120px;
+    height: auto;
+    margin-right: 10px;
+    object-fit: cover;
   }
-  #rss a {
+  .rss-item-content {
+    flex: 1;
+  }
+  .rss-item-content a {
+    font-size: 18px;
+    font-weight: bold;
     text-decoration: none;
     color: #0066cc;
   }
-  #rss a:hover {
+  .rss-item-content a:hover {
     text-decoration: underline;
+  }
+  .rss-item-content p {
+    margin: 5px 0 0;
+    color: #444;
+    font-size: 14px;
+    line-height: 1.4em;
   }
 
   /* Swan styling */
   #swan {
     position: fixed;
-    top: 0;
-    left: 0;
+    bottom: 20px; /* stays near bottom of page */
+    left: 50%;
+    transform: translateX(-50%);
     width: 80px;
     pointer-events: none;
-    transition: transform 0.1s linear;
+    transition: left 0.3s ease;
     z-index: 9999;
   }
 </style>
@@ -62,14 +79,17 @@
 </div>
 
 <script>
-// ===== Swan cursor tracking =====
+// ===== Swan movement only left/right =====
 const swan = document.getElementById('swan');
 document.addEventListener('mousemove', (e) => {
-  swan.style.transform = `translate(${e.pageX}px, ${e.pageY}px)`;
+  const pageWidth = window.innerWidth;
+  const percentX = e.clientX / pageWidth;
+  const moveX = percentX * (pageWidth - 80); // 80 = swan width
+  swan.style.left = moveX + "px";
 });
 
 // ===== RSS fetching via public CORS proxy =====
-const FEED_URL = 'https://www.todaysmedicaldevelopments.com/rss/';
+const FEED_URL = 'https://www.medtechdive.com/feeds/';
 const PROXY = 'https://api.allorigins.win/raw?url=';
 const requestUrl = PROXY + encodeURIComponent(FEED_URL);
 
@@ -78,14 +98,36 @@ fetch(requestUrl)
   .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
   .then(data => {
     const items = data.querySelectorAll("item");
-    let output = '<h2>Medical Devices News</h2><ul>';
+    let output = '<h2>Medical Devices News</h2>';
     items.forEach((item, index) => {
       if (index < 10) { // limit to 10 items
-        output += `<li><a href="${item.querySelector("link").textContent}" target="_blank">
-        ${item.querySelector("title").textContent}</a></li>`;
+        const title = item.querySelector("title")?.textContent || "";
+        const link = item.querySelector("link")?.textContent || "#";
+        let desc = item.querySelector("description")?.textContent || "";
+        desc = desc.replace(/<[^>]*>/g, "").substring(0, 200) + "..."; // remove HTML + shorten
+        
+        // Try to extract image if available
+        let imgUrl = "";
+        const enclosure = item.querySelector("enclosure");
+        if (enclosure && enclosure.getAttribute("url")) {
+          imgUrl = enclosure.getAttribute("url");
+        } else {
+          // Fallback: check for media:content
+          const mediaContent = item.getElementsByTagName("media:content")[0];
+          if (mediaContent && mediaContent.getAttribute("url")) {
+            imgUrl = mediaContent.getAttribute("url");
+          }
+        }
+
+        output += `<div class="rss-item">
+          ${imgUrl ? `<img src="${imgUrl}" alt="">` : ""}
+          <div class="rss-item-content">
+            <a href="${link}" target="_blank">${title}</a>
+            <p>${desc}</p>
+          </div>
+        </div>`;
       }
     });
-    output += '</ul>';
     document.getElementById("rss").innerHTML = output;
   })
   .catch(err => {
