@@ -1,208 +1,98 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Swan + RSS (MedTech)</title>
+<meta charset="UTF-8">
+<title>Swan + RSS Feed</title>
 <style>
-  :root{--panel-width:100%;--panel-height:calc(100vh - 20px)}
-  html,body{height:100%;margin:0;font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#fff}
-  /* news area */
-  #newsWrap{
-    position:relative;
-    z-index:1;
-    padding:16px;
-    max-width:1100px;
-    margin:10px auto;
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f0f0f0;
+    overflow-x: hidden;
   }
-  #newsHeader{font-size:20px;margin-bottom:8px}
-  #feedList{
-    list-style:none;
-    padding:0;
-    margin:0;
-    max-height:60vh;
-    overflow:auto;
-    border:1px solid #e1e1e1;
-    border-radius:6px;
+  #rss {
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+    background: white;
+    box-shadow: 0 0 8px rgba(0,0,0,0.2);
   }
-  #feedList li{
-    padding:12px;
-    border-bottom:1px solid #eee;
+  #rss h2 {
+    margin-top: 0;
+    color: #333;
   }
-  #feedList li:last-child{border-bottom:none}
-  .itemTitle{font-weight:600;margin-bottom:6px;display:block;color:#0a58ca;text-decoration:none}
-  .itemMeta{font-size:12px;color:#666;margin-bottom:6px}
-  .itemDesc{font-size:14px;color:#333}
-  /* swan overlay */
+  #rss ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  #rss li {
+    margin: 8px 0;
+    font-size: 16px;
+  }
+  #rss a {
+    text-decoration: none;
+    color: #0066cc;
+  }
+  #rss a:hover {
+    text-decoration: underline;
+  }
+
+  /* Swan styling */
   #swan {
     position: fixed;
-    width: 110px;
-    pointer-events: none; /* lets clicks go through to RSS links */
-    transform: translate(-50%, -50%) rotate(0deg);
+    top: 0;
+    left: 0;
+    width: 80px;
+    pointer-events: none;
+    transition: transform 0.1s linear;
     z-index: 9999;
-    will-change: transform, left, top;
-    transition: transform 80ms linear;
   }
-  /* small responsive tweaks */
-  @media (max-width:600px){
-    #swan{ width: 80px }
-    #newsWrap{ padding:10px }
-  }
-  /* error / status */
-  #status { color:#b00; margin:10px auto; max-width:1100px; padding:6px 12px; }
 </style>
 </head>
 <body>
 
-<!-- Swan image (on top) -->
-<img id="swan" src="swan.png" alt="Swan">
+<!-- Swan image -->
+<img src="https://github.com/rohithvasudevan/swan-mascot/blob/main/swan.png" id="swan" alt="Swan">
 
-<!-- Status / errors -->
-<div id="status" style="display:none"></div>
-
-<!-- News area -->
-<div id="newsWrap" aria-live="polite">
-  <div id="newsHeader">Latest: Medical Devices (MedTech Dive)</div>
-  <ul id="feedList"><li style="padding:20px;color:#666">Loading feed…</li></ul>
+<!-- RSS feed -->
+<div id="rss">
+  <h2>Medical Devices News</h2>
+  <p>Loading feed...</p>
 </div>
 
 <script>
-/* ========== CONFIG ========== */
-/* Replace FEED_URL with the RSS feed you want.
-   MedTech general feed: https://www.medtechdive.com/feeds/news
-   If you have a topic-specific feed URL, put it here. */
-const FEED_URL = 'https://www.medtechdive.com/feeds/news';
-
-/* Swan image — replace with your uploaded swan image path (HTTPS).
-   Example: https://yourdomain.com/path/swan.png  */
-const SWAN_SRC = 'https://github.com/rohithvasudevan/swan-mascot/blob/main/swan.png';
-
-/* Optional: if direct fetch to FEED_URL fails due to CORS,
-   set USE_PROXY = true to use public AllOrigins proxy (quick test).
-   For production you should run a small server-side proxy or serverless function.
-*/
-const USE_PROXY = true; // set to true only if needed for testing
-
-/* ========== DOM ========== */
+// ===== Swan cursor tracking =====
 const swan = document.getElementById('swan');
-swan.src = SWAN_SRC;
-const feedList = document.getElementById('feedList');
-const statusEl = document.getElementById('status');
+document.addEventListener('mousemove', (e) => {
+  swan.style.transform = `translate(${e.pageX}px, ${e.pageY}px)`;
+});
 
-/* ========== SWAN SMOOTH FOLLOW LOGIC ========== */
-let targetX = window.innerWidth / 2;
-let targetY = window.innerHeight / 2;
-let curX = targetX, curY = targetY;
-let lastAngle = 0;
+// ===== RSS fetching via public CORS proxy =====
+const FEED_URL = 'https://www.medtechdive.com/feeds/';
+const PROXY = 'https://api.allorigins.win/raw?url=';
+const requestUrl = PROXY + encodeURIComponent(FEED_URL);
 
-function onMouseMove(e){
-  targetX = e.clientX;
-  targetY = e.clientY;
-}
-document.addEventListener('mousemove', onMouseMove, {passive:true});
-document.addEventListener('touchmove', (ev) => {
-  if(ev.touches && ev.touches[0]){
-    targetX = ev.touches[0].clientX;
-    targetY = ev.touches[0].clientY;
-  }
-}, {passive:true});
-
-function animate(){
-  // easing
-  const ease = 0.16;
-  curX += (targetX - curX) * ease;
-  curY += (targetY - curY) * ease;
-  // rotate to face movement direction
-  const dx = targetX - curX;
-  const dy = targetY - curY;
-  let angle = Math.atan2(dy, dx) * (180 / Math.PI);
-  // small smoothing of angle
-  lastAngle += (angle - lastAngle) * 0.18;
-
-  swan.style.left = curX + 'px';
-  swan.style.top = curY + 'px';
-  swan.style.transform = `translate(-50%, -50%) rotate(${lastAngle}deg)`;
-
-  requestAnimationFrame(animate);
-}
-requestAnimationFrame(animate);
-
-/* ========== RSS FETCH + PARSE ========== */
-async function fetchFeed(url){
-  try {
-    let fetchUrl = url;
-    if(USE_PROXY){
-      // quick testing proxy (AllOrigins). Replace with your own proxy in production.
-      fetchUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-    }
-    const res = await fetch(fetchUrl, { method: 'GET', mode: 'cors' });
-    if(!res.ok) throw new Error('Network response not ok: ' + res.status);
-    const text = await res.text();
-    const dom = (new DOMParser()).parseFromString(text, 'application/xml');
-    // check for parsererror
-    if(dom.querySelector('parsererror')) throw new Error('Failed to parse feed XML');
-    return dom;
-  } catch(err){
-    throw err;
-  }
-}
-
-function renderFeed(doc){
-  const items = Array.from(doc.querySelectorAll('item')).slice(0, 25);
-  if(items.length === 0){
-    feedList.innerHTML = '<li style="padding:20px;color:#666">No feed items found.</li>';
-    return;
-  }
-  feedList.innerHTML = '';
-  items.forEach(it => {
-    const title = it.querySelector('title') ? it.querySelector('title').textContent : 'No title';
-    const link = it.querySelector('link') ? it.querySelector('link').textContent : '#';
-    const pub = it.querySelector('pubDate') ? it.querySelector('pubDate').textContent : '';
-    const descNode = it.querySelector('description') || it.querySelector('content\\:encoded');
-    let desc = descNode ? descNode.textContent : '';
-    // quick snippet cleanup
-    desc = desc.replace(/(<([^>]+)>)/gi, "").trim();
-    const li = document.createElement('li');
-    li.innerHTML = `
-      <a class="itemTitle" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(title)}</a>
-      <div class="itemMeta">${escapeHtml(pub)}</div>
-      <div class="itemDesc">${escapeHtml(desc.slice(0, 300))}${desc.length>300?'...':''}</div>
-    `;
-    feedList.appendChild(li);
-  });
-}
-
-/* basic HTML escape */
-function escapeHtml(s){
-  return String(s)
-    .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
-    .replaceAll('"','&quot;').replaceAll("'","&#39;");
-}
-
-/* load */
-(async function init(){
-  try {
-    feedList.innerHTML = '<li style="padding:20px;color:#666">Loading feed…</li>';
-    const doc = await fetchFeed(FEED_URL);
-    renderFeed(doc);
-    statusEl.style.display = 'none';
-  } catch(err){
+fetch(requestUrl)
+  .then(res => res.text())
+  .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+  .then(data => {
+    const items = data.querySelectorAll("item");
+    let output = '<h2>Medical Devices News</h2><ul>';
+    items.forEach((item, index) => {
+      if (index < 10) { // limit to 10 items
+        output += `<li><a href="${item.querySelector("link").textContent}" target="_blank">
+        ${item.querySelector("title").textContent}</a></li>`;
+      }
+    });
+    output += '</ul>';
+    document.getElementById("rss").innerHTML = output;
+  })
+  .catch(err => {
+    document.getElementById("rss").innerHTML = "<p>Error loading feed.</p>";
     console.error(err);
-    // show helpful message + suggested fixes
-    statusEl.style.display = 'block';
-    statusEl.innerHTML = `
-      Could not load feed natively: ${escapeHtml(err.message)}.<br>
-      Possible reasons: CORS (cross-origin) blocked the request, or the feed URL is incorrect.<br>
-      <strong>Fixes:</strong>
-      <ol>
-        <li>Set <code>USE_PROXY = true</code> in the combined.html for a quick test (uses a public proxy).</li>
-        <li>Deploy a tiny proxy/serverless function (Cloudflare Worker/Azure Function) that fetches the feed and returns it with CORS headers.</li>
-        <li>If you control the feed domain, enable CORS header <code>Access-Control-Allow-Origin: *</code>.</li>
-      </ol>
-    `;
-    feedList.innerHTML = '<li style="padding:20px;color:#666">Failed to load feed. See the message above.</li>';
-  }
-})();
+  });
 </script>
+
 </body>
 </html>
