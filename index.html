@@ -65,7 +65,27 @@
   <div id="newsHeader">Latest: Medical Devices (MedTech Dive)</div>
   <ul id="feedList"><li style="padding:20px;color:#666">Loading feed…</li></ul>
 </div>
+<script>
+const USE_PROXY = true;
+const FEED_URL = 'https://www.todaysmedicaldevelopments.com/rss/'; // Replace with exact feed link
 
+const proxy = 'https://api.allorigins.win/raw?url=';
+const requestUrl = USE_PROXY ? proxy + encodeURIComponent(FEED_URL) : FEED_URL;
+
+fetch(requestUrl)
+  .then(res => res.text())
+  .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+  .then(data => {
+    const items = data.querySelectorAll("item");
+    let output = '<h2>Medical Devices News</h2><ul>';
+    items.forEach(item => {
+      output += `<li><a href="${item.querySelector("link").textContent}" target="_blank">
+      ${item.querySelector("title").textContent}</a></li>`;
+    });
+    output += '</ul>';
+    document.getElementById("rss").innerHTML = output;
+  });
+</script>
 <script>
 /* ========== CONFIG ========== */
 /* Replace FEED_URL with the RSS feed you want.
