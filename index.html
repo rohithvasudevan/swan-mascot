@@ -1,74 +1,208 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Swan + RSS (MedTech)</title>
 <style>
-  html,body { margin:0; height:100%; background:transparent; }
-  .stage { position:relative; width:100%; height:100%; overflow:hidden; }
-  #swanWrap {
-    position:absolute;
-    bottom:8px;
-    left:50%;
-    transform:translateX(-50%);
-    transition:left .35s cubic-bezier(.2,.8,.2,1);
-    width:120px;
-    height:80px;
-    pointer-events:none;
-    animation: bob 4s ease-in-out infinite;
+  :root{--panel-width:100%;--panel-height:calc(100vh - 20px)}
+  html,body{height:100%;margin:0;font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#fff}
+  /* news area */
+  #newsWrap{
+    position:relative;
+    z-index:1;
+    padding:16px;
+    max-width:1100px;
+    margin:10px auto;
   }
-  @keyframes bob {
-    0% { transform:translateX(-50%) translateY(0); }
-    50% { transform:translateX(-50%) translateY(-8px); }
-    100% { transform:translateX(-50%) translateY(0); }
+  #newsHeader{font-size:20px;margin-bottom:8px}
+  #feedList{
+    list-style:none;
+    padding:0;
+    margin:0;
+    max-height:60vh;
+    overflow:auto;
+    border:1px solid #e1e1e1;
+    border-radius:6px;
   }
-  #swanImg {
-    width:120px;
-    display:block;
-    transition:transform .22s linear;
+  #feedList li{
+    padding:12px;
+    border-bottom:1px solid #eee;
   }
+  #feedList li:last-child{border-bottom:none}
+  .itemTitle{font-weight:600;margin-bottom:6px;display:block;color:#0a58ca;text-decoration:none}
+  .itemMeta{font-size:12px;color:#666;margin-bottom:6px}
+  .itemDesc{font-size:14px;color:#333}
+  /* swan overlay */
+  #swan {
+    position: fixed;
+    width: 110px;
+    pointer-events: none; /* lets clicks go through to RSS links */
+    transform: translate(-50%, -50%) rotate(0deg);
+    z-index: 9999;
+    will-change: transform, left, top;
+    transition: transform 80ms linear;
+  }
+  /* small responsive tweaks */
+  @media (max-width:600px){
+    #swan{ width: 80px }
+    #newsWrap{ padding:10px }
+  }
+  /* error / status */
+  #status { color:#b00; margin:10px auto; max-width:1100px; padding:6px 12px; }
 </style>
 </head>
 <body>
-  <div class="stage">
-    <div id="swanWrap">
-      <img id="swanImg" src="swan.png" alt="Swan Mascot">
-    </div>
-    <div id="rss-container">
-      <iframe src="https://feed.mikle.com/widget/v2/https://www.todaysmedicaldevelopments.com/rss/"
-          width="100%" height="600" frameborder="0" scrolling="yes"></iframe>
-    </div>
-  </div>
+
+<!-- Swan image (on top) -->
+<img id="swan" src="" alt="Swan">
+
+<!-- Status / errors -->
+<div id="status" style="display:none"></div>
+
+<!-- News area -->
+<div id="newsWrap" aria-live="polite">
+  <div id="newsHeader">Latest: Medical Devices (MedTech Dive)</div>
+  <ul id="feedList"><li style="padding:20px;color:#666">Loading feed…</li></ul>
+</div>
 
 <script>
-/*(function(){
-  const wrap = document.getElementById('swanWrap');
-  const swan = document.getElementById('swanImg');
-  let lastX = window.innerWidth/2;
-  let leftPct = 50;
-  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+/* ========== CONFIG ========== */
+/* Replace FEED_URL with the RSS feed you want.
+   MedTech general feed: https://www.medtechdive.com/feeds/news
+   If you have a topic-specific feed URL, put it here. */
+const FEED_URL = 'https://www.medtechdive.com/feeds/news';
 
-  function onMove(clientX){
-    const delta = clientX - lastX;
-    if(Math.abs(delta) < 4){ lastX = clientX; return; }
-    swan.style.transform = (delta < 0) ? 'scaleX(-1)' : 'scaleX(1)';
-    leftPct += (delta / window.innerWidth) * 100 * 0.8;
-    leftPct = clamp(leftPct, 6, 94);
-    wrap.style.left = leftPct + '%';
-    lastX = clientX;
+/* Swan image — replace with your uploaded swan image path (HTTPS).
+   Example: https://yourdomain.com/path/swan.png  */
+const SWAN_SRC = 'https://upload.wikimedia.org/wikipedia/commons/2/24/White_swan.png';
+
+/* Optional: if direct fetch to FEED_URL fails due to CORS,
+   set USE_PROXY = true to use public AllOrigins proxy (quick test).
+   For production you should run a small server-side proxy or serverless function.
+*/
+const USE_PROXY = false; // set to true only if needed for testing
+
+/* ========== DOM ========== */
+const swan = document.getElementById('swan');
+swan.src = SWAN_SRC;
+const feedList = document.getElementById('feedList');
+const statusEl = document.getElementById('status');
+
+/* ========== SWAN SMOOTH FOLLOW LOGIC ========== */
+let targetX = window.innerWidth / 2;
+let targetY = window.innerHeight / 2;
+let curX = targetX, curY = targetY;
+let lastAngle = 0;
+
+function onMouseMove(e){
+  targetX = e.clientX;
+  targetY = e.clientY;
+}
+document.addEventListener('mousemove', onMouseMove, {passive:true});
+document.addEventListener('touchmove', (ev) => {
+  if(ev.touches && ev.touches[0]){
+    targetX = ev.touches[0].clientX;
+    targetY = ev.touches[0].clientY;
   }
+}, {passive:true});
 
-  document.addEventListener('mousemove', e => onMove(e.clientX), {passive:true});
-  document.addEventListener('touchmove', e => {
-    if(e.touches && e.touches[0]) onMove(e.touches[0].clientX);
-  }, {passive:true});
-  window.addEventListener('resize', () => { lastX = window.innerWidth/2; });
-})();*/
-  const swan = document.getElementById('swan');
-  document.addEventListener('mousemove', (e) => {
-    swan.style.left = (e.pageX - 50) + 'px';
-    swan.style.top = (e.pageY - 50) + 'px';
+function animate(){
+  // easing
+  const ease = 0.16;
+  curX += (targetX - curX) * ease;
+  curY += (targetY - curY) * ease;
+  // rotate to face movement direction
+  const dx = targetX - curX;
+  const dy = targetY - curY;
+  let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+  // small smoothing of angle
+  lastAngle += (angle - lastAngle) * 0.18;
+
+  swan.style.left = curX + 'px';
+  swan.style.top = curY + 'px';
+  swan.style.transform = `translate(-50%, -50%) rotate(${lastAngle}deg)`;
+
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+/* ========== RSS FETCH + PARSE ========== */
+async function fetchFeed(url){
+  try {
+    let fetchUrl = url;
+    if(USE_PROXY){
+      // quick testing proxy (AllOrigins). Replace with your own proxy in production.
+      fetchUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+    }
+    const res = await fetch(fetchUrl, { method: 'GET', mode: 'cors' });
+    if(!res.ok) throw new Error('Network response not ok: ' + res.status);
+    const text = await res.text();
+    const dom = (new DOMParser()).parseFromString(text, 'application/xml');
+    // check for parsererror
+    if(dom.querySelector('parsererror')) throw new Error('Failed to parse feed XML');
+    return dom;
+  } catch(err){
+    throw err;
+  }
+}
+
+function renderFeed(doc){
+  const items = Array.from(doc.querySelectorAll('item')).slice(0, 25);
+  if(items.length === 0){
+    feedList.innerHTML = '<li style="padding:20px;color:#666">No feed items found.</li>';
+    return;
+  }
+  feedList.innerHTML = '';
+  items.forEach(it => {
+    const title = it.querySelector('title') ? it.querySelector('title').textContent : 'No title';
+    const link = it.querySelector('link') ? it.querySelector('link').textContent : '#';
+    const pub = it.querySelector('pubDate') ? it.querySelector('pubDate').textContent : '';
+    const descNode = it.querySelector('description') || it.querySelector('content\\:encoded');
+    let desc = descNode ? descNode.textContent : '';
+    // quick snippet cleanup
+    desc = desc.replace(/(<([^>]+)>)/gi, "").trim();
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <a class="itemTitle" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(title)}</a>
+      <div class="itemMeta">${escapeHtml(pub)}</div>
+      <div class="itemDesc">${escapeHtml(desc.slice(0, 300))}${desc.length>300?'...':''}</div>
+    `;
+    feedList.appendChild(li);
   });
+}
+
+/* basic HTML escape */
+function escapeHtml(s){
+  return String(s)
+    .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+    .replaceAll('"','&quot;').replaceAll("'","&#39;");
+}
+
+/* load */
+(async function init(){
+  try {
+    feedList.innerHTML = '<li style="padding:20px;color:#666">Loading feed…</li>';
+    const doc = await fetchFeed(FEED_URL);
+    renderFeed(doc);
+    statusEl.style.display = 'none';
+  } catch(err){
+    console.error(err);
+    // show helpful message + suggested fixes
+    statusEl.style.display = 'block';
+    statusEl.innerHTML = `
+      Could not load feed natively: ${escapeHtml(err.message)}.<br>
+      Possible reasons: CORS (cross-origin) blocked the request, or the feed URL is incorrect.<br>
+      <strong>Fixes:</strong>
+      <ol>
+        <li>Set <code>USE_PROXY = true</code> in the combined.html for a quick test (uses a public proxy).</li>
+        <li>Deploy a tiny proxy/serverless function (Cloudflare Worker/Azure Function) that fetches the feed and returns it with CORS headers.</li>
+        <li>If you control the feed domain, enable CORS header <code>Access-Control-Allow-Origin: *</code>.</li>
+      </ol>
+    `;
+    feedList.innerHTML = '<li style="padding:20px;color:#666">Failed to load feed. See the message above.</li>';
+  }
+})();
 </script>
 </body>
 </html>
