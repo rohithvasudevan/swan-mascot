@@ -10,10 +10,8 @@
     padding: 20px;
     background: #ffffff;
     color: #222;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-    height:100%;
+    width: 100%;
+    min-height: 100vh;
   }
   .feed-title {
     font-size: 28px;
@@ -24,15 +22,19 @@
   }
   #feed {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    padding: 10px;
   }
   .item {
     background: #fff;
-    border-radius: 10px;
-    padding: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     transition: transform 0.2s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
   .item:hover {
     transform: translateY(-4px);
@@ -60,6 +62,7 @@
     font-size: 15px;
     line-height: 1.5;
     color: #333;
+    flex-grow: 1;
   }
 
   #swanWrap {
