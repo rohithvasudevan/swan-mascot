@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>MedTech Dive News (No Thumbnails)</title>
+<title>MedTech Dive News (Floating, Personalized)</title>
 <style>
   body {
     font-family: "Open Sans", Arial, sans-serif;
@@ -10,7 +10,7 @@
     padding: 20px;
     background: #ffffff;
     color: #222;
-    max-width: 800px;
+    max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
     height:100%;
@@ -20,11 +20,22 @@
     font-weight: 700;
     margin-bottom: 20px;
     color: #004c97;
+    text-align: center;
+  }
+  #feed {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
   }
   .item {
-    border-bottom: 1px solid #e5e5e5;
-    padding-bottom: 16px;
-    margin-bottom: 16px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+  }
+  .item:hover {
+    transform: translateY(-4px);
   }
   .item h3 {
     font-size: 20px;
@@ -71,11 +82,11 @@
     width:120px;
     display:block;
     transition:transform .22s linear;
-
+  }
 </style>
 </head>
 <body>
-<div class="feed-title">MedTech Dive: Latest Medical Device News</div>
+<div class="feed-title">MedTech Dive: Personalized Medical Device News</div>
 <div id="feed">Loading news...</div>
   <div id="swanWrap">
       <img id="swanImg" src="swan.png" alt="Swan Mascot">
@@ -106,39 +117,66 @@
 })();
 </script>
 <script>
-const FEED = 'https://www.medtechdive.com/feeds/news';
-const PROXY = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(FEED);
+function getUserFeeds() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const user = urlParams.get("user") || "default";
 
-fetch(PROXY)
-  .then(r => r.text())
-  .then(str => new DOMParser().parseFromString(str, 'application/xml'))
-  .then(xml => {
-    const items = xml.querySelectorAll('item');
-    let html = '';
-    items.forEach((it, idx) => {
-      if(idx >= 10) return; // Limit to 10 stories
-      const title = it.querySelector('title')?.textContent || '';
-      const link = it.querySelector('link')?.textContent || '#';
-      const pub = it.querySelector('pubDate')?.textContent || '';
-      const dateObj = new Date(pub);
-      const pubDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-      const desc = (it.querySelector('description')?.textContent || '')
-                   .replace(/<[^>]*>/g, '') // Strip HTML tags
-                   .trim();
-      const snippet = desc.split(/\s+/).slice(0, 30).join(' ') + '...';
+  // Define user-specific feeds
+  const feeds = {
+    rohith: [
+      "https://www.medtechdive.com/feeds/news",
+      "https://www.fiercebiotech.com/rss"
+    ],
+    guest: [
+      "https://www.medtechdive.com/feeds/news"
+    ],
+    default: [
+      "https://www.medtechdive.com/feeds/news"
+    ]
+  };
 
-      html += `<div class="item">
-        <h3><a href="${link}" target="_blank">${title}</a></h3>
-        <div class="meta">${pubDate}</div>
-        <p>${snippet}</p>
-      </div>`;
-    });
-    document.getElementById('feed').innerHTML = html || 'No items found.';
-  })
-  .catch(err => {
-    console.error(err);
-    document.getElementById('feed').innerText = 'Error loading feed.';
-  });
+  return feeds[user] || feeds.default;
+}
+
+async function loadFeeds() {
+  const feedList = getUserFeeds();
+  let html = '';
+
+  for (let FEED of feedList) {
+    const PROXY = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(FEED);
+
+    try {
+      const r = await fetch(PROXY);
+      const str = await r.text();
+      const xml = new DOMParser().parseFromString(str, 'application/xml');
+      const items = xml.querySelectorAll('item');
+
+      items.forEach((it, idx) => {
+        if(idx >= 5) return; // limit per feed
+        const title = it.querySelector('title')?.textContent || '';
+        const link = it.querySelector('link')?.textContent || '#';
+        const pub = it.querySelector('pubDate')?.textContent || '';
+        const dateObj = new Date(pub);
+        const pubDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        const desc = (it.querySelector('description')?.textContent || '').replace(/<[^>]*>/g, '').trim();
+        const snippet = desc.split(/\s+/).slice(0, 20).join(' ') + '...';
+
+        html += `<div class="item">
+          <h3><a href="${link}" target="_blank">${title}</a></h3>
+          <div class="meta">${pubDate}</div>
+          <p>${snippet}</p>
+        </div>`;
+      });
+    } catch (err) {
+      console.error(err);
+      html += `<div class="item">Error loading feed: ${FEED}</div>`;
+    }
+  }
+
+  document.getElementById('feed').innerHTML = html || 'No items found.';
+}
+
+loadFeeds();
 </script>
 </body>
 </html>
