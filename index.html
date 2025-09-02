@@ -155,7 +155,7 @@ async function loadFeeds() {
       const items = xml.querySelectorAll('item');
 
       items.forEach((it, idx) => {
-        if(idx >= 5) return; // limit per feed
+        if(idx >= 4) return; // limit per feed
         const title = it.querySelector('title')?.textContent || '';
         const link = it.querySelector('link')?.textContent || '#';
         const pub = it.querySelector('pubDate')?.textContent || '';
