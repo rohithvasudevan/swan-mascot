@@ -2,92 +2,38 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>Dashboard with Calendar, RSS & Main Content</title>
+<title>Dashboard with RSS & Swan</title>
 <style>
   body {
     margin: 0;
     padding: 0;
     height: 100vh;
     width: 100vw;
-    font-family: Arial, sans-serif;
-    overflow: hidden;
-  }
-
-  .container {
-    display: flex;
-    width: 100%;
-    height: 100%;
-  }
-
-  /* Main content expands fully */
-  .main {
-    flex: 1;
-    height: 80%;
-    padding: 10px;
-    background: #eee;
-  }
-  .main iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-  }
-
-  /* Right upcoming events panel */
-  .calendar {
-    width: 220px; /* fixed width instead of % */
-    height: 80%;
-    border-left: 2px solid #ccc;
-    padding: 10px 5px;
-    background: #f9f9f9;
+    font-family: "Open Sans", Arial, sans-serif;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-  }
-  .calendar h3 {
-    font-size: 16px;
-    margin: 0 0 10px;
-    text-align: center;
-    flex-shrink: 0;
-  }
-  .event-container {
-    flex: 1;
     overflow: hidden;
-    position: relative;
-  }
-  #event-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    position: absolute;
-    width: 100%;
-    animation: scroll-up 20s linear infinite;
-  }
-  #event-list li {
-    margin-bottom: 10px;
-    font-size: 14px;
-    color: #333;
-    background: #fff;
-    padding: 6px;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  }
-  @keyframes scroll-up {
-    0%   { transform: translateY(100%); }
-    100% { transform: translateY(-100%); }
   }
 
-  /* Bottom RSS */
-  .rss {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 20%;
+  /* Layout split */
+  .top {
+    flex: 7; /* ~70% */
+    background: #eee;
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .bottom {
+    flex: 3; /* ~30% */
     background: #f4f4f4;
+    border-top: 2px solid #ccc;
     overflow: hidden;
+    position: relative;
     display: flex;
     align-items: center;
-    border-top: 2px solid #ccc;
   }
+
+  /* RSS scrolling */
   .rss-wrapper {
     display: flex;
     gap: 20px;
@@ -95,7 +41,7 @@
     animation: scroll-left 60s linear infinite;
     padding: 10px;
   }
-  .rss .item {
+  .item {
     min-width: 280px;
     background: #fff;
     border-radius: 12px;
@@ -105,23 +51,23 @@
     vertical-align: top;
     white-space: normal;
   }
-  .rss .item h3 {
+  .item h3 {
     font-size: 16px;
     margin: 0 0 6px;
   }
-  .rss .item h3 a {
+  .item h3 a {
     text-decoration: none;
     color: #004c97;
   }
-  .rss .item h3 a:hover {
+  .item h3 a:hover {
     text-decoration: underline;
   }
-  .rss .meta {
+  .meta {
     font-size: 12px;
     color: #777;
     margin-bottom: 6px;
   }
-  .rss .item p {
+  .item p {
     font-size: 14px;
     color: #333;
     margin: 0;
@@ -143,139 +89,38 @@
     pointer-events: none;
     animation: bob 4s ease-in-out infinite;
   }
+  @keyframes bob {
+    0% { transform:translateX(-50%) translateY(0); }
+    50% { transform:translateX(-50%) translateY(-8px); }
+    100% { transform:translateX(-50%) translateY(0); }
+  }
   #swanImg {
     width: 120px;
     display: block;
     transition: transform .22s linear;
   }
-  @keyframes bob {
-    0% { transform: translateX(-50%) translateY(0); }
-    50% { transform: translateX(-50%) translateY(-8px); }
-    100% { transform: translateX(-50%) translateY(0); }
-  }
 </style>
 </head>
 <body>
-<div class="container">
-  <!-- Main Section -->
-  <div class="main">
-    <!-- Placeholder iframe (change to your internal link if inside SharePoint) -->
-    <iframe src="https://www.example.com"></iframe>
+  <!-- Top Section (inline content instead of iframe) -->
+  <div class="top" id="mainContent">
+    <h1>Main Content Area</h1>
+    <p>This section can hold your SharePoint or dashboard widgets directly without iframe.</p>
+    <p>Because it’s inline, the swan mascot will now follow your cursor anywhere on the page.</p>
   </div>
 
-  
-  
-</div>
+  <!-- Bottom RSS Section -->
+  <div class="bottom">
+    <div class="rss-wrapper" id="feed">Loading feed...</div>
+  </div>
 
-<!-- RSS Section -->
-<div class="rss">
-  <div class="rss-wrapper" id="feed">Loading personalized feed...</div>
-</div>
-
-<!-- Swan Mascot -->
-<div id="swanWrap">
-  <img id="swanImg" src="swan.png" alt="Swan Mascot">
-</div>
+  <!-- Swan Mascot -->
+  <div id="swanWrap">
+    <img id="swanImg" src="swan.png" alt="Swan Mascot">
+  </div>
 
 <script>
-function getUserFeeds() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const dept = urlParams.get("dept") || "default";
-
-  const feeds = {
-    cardiology: [
-      "https://www.medscape.com/cx/rss/cardiology.xml"
-    ],
-    oncology: [
-      "https://www.medscape.com/cx/rss/oncology.xml"
-    ],
-    default: [
-      "https://www.medtechdive.com/feeds/news"
-    ]
-  };
-  return feeds[dept] || feeds.default;
-}
-
-async function loadFeeds() {
-  const feedList = getUserFeeds();
-  let html = '';
-
-  for (let FEED of feedList) {
-    const PROXY = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(FEED);
-    try {
-      const r = await fetch(PROXY);
-      const str = await r.text();
-      const xml = new DOMParser().parseFromString(str, 'application/xml');
-      const items = xml.querySelectorAll('item');
-
-      items.forEach((it, idx) => {
-        if(idx >= 5) return;
-        const title = it.querySelector('title')?.textContent || '';
-        const link = it.querySelector('link')?.textContent || '#';
-        const pub = it.querySelector('pubDate')?.textContent || '';
-        const dateObj = new Date(pub);
-        const pubDate = isNaN(dateObj) ? '' : dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        const desc = (it.querySelector('description')?.textContent || '').replace(/<[^>]*>/g, '').trim();
-        const snippet = desc.split(/\\s+/).slice(0, 12).join(' ') + '...';
-
-        html += `<div class="item">
-          <h3><a href="${link}" target="_blank">${title}</a></h3>
-          <div class="meta">${pubDate}</div>
-          <p>${snippet}</p>
-        </div>`;
-      });
-    } catch (err) {
-      console.error(err);
-      html += `<div class="item">Error loading feed: ${FEED}</div>`;
-    }
-  }
-
-  document.getElementById('feed').innerHTML = html || 'No items found.';
-}
-
-// Mock events (replace with SharePoint REST API later)
-async function loadEvents() {
-  const siteUrl = "https://bplmedtech.sharepoint.com/sites/rdp";
-  const listName = "Holiday Calendar";
-  const endpoint = `${siteUrl}/_api/web/lists/getbytitle('${listName}')/items?$select=Title,EventDate,EndDate&$orderby=EventDate asc&$top=5`;
-
-  try {
-    const response = await fetch(endpoint, {
-      headers: {
-        "Accept": "application/json;odata=nometadata"
-      },
-      credentials: "include"  // IMPORTANT: use logged-in SharePoint credentials
-    });
-
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const data = await response.json();
-    const list = document.getElementById("event-list");
-
-    if (!data.value || data.value.length === 0) {
-      list.innerHTML = "<li>No upcoming events</li>";
-      return;
-    }
-
-    list.innerHTML = data.value.map(ev => {
-      const start = new Date(ev.EventDate);
-      const dateStr = start.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric"
-      });
-      return `<li><strong>${dateStr}:</strong> ${ev.Title}</li>`;
-    }).join("");
-  } catch (err) {
-    console.error("Error loading events", err);
-    document.getElementById("event-list").innerHTML = "<li>Error loading events</li>";
-  }
-}
-
-
-loadFeeds();
-l
-
-// Swan mascot movement
+/* Swan movement */
 (function(){
   const wrap = document.getElementById('swanWrap');
   const swan = document.getElementById('swanImg');
@@ -299,6 +144,59 @@ l
   }, {passive:true});
   window.addEventListener('resize', () => { lastX = window.innerWidth/2; });
 })();
+
+/* RSS Loader */
+function getUserFeeds() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const user = urlParams.get("user") || "default";
+  const feeds = {
+    rohith: [
+      "https://www.medtechdive.com/feeds/news",
+      "https://www.fiercebiotech.com/rss"
+    ],
+    guest: [
+      "https://www.medtechdive.com/feeds/news"
+    ],
+    default: [
+      "https://www.medtechdive.com/feeds/news"
+    ]
+  };
+  return feeds[user] || feeds.default;
+}
+
+async function loadFeeds() {
+  const feedList = getUserFeeds();
+  let html = '';
+  for (let FEED of feedList) {
+    const PROXY = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(FEED);
+    try {
+      const r = await fetch(PROXY);
+      const str = await r.text();
+      const xml = new DOMParser().parseFromString(str, 'application/xml');
+      const items = xml.querySelectorAll('item');
+      items.forEach((it, idx) => {
+        if(idx >= 4) return;
+        const title = it.querySelector('title')?.textContent || '';
+        const link = it.querySelector('link')?.textContent || '#';
+        const pub = it.querySelector('pubDate')?.textContent || '';
+        const dateObj = new Date(pub);
+        const pubDate = isNaN(dateObj) ? '' : dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const desc = (it.querySelector('description')?.textContent || '').replace(/<[^>]*>/g, '').trim();
+        const snippet = desc.split(/\s+/).slice(0, 12).join(' ') + '...';
+        html += `<div class="item">
+          <h3><a href="${link}" target="_blank">${title}</a></h3>
+          <div class="meta">${pubDate}</div>
+          <p>${snippet}</p>
+        </div>`;
+      });
+    } catch (err) {
+      console.error(err);
+      html += `<div class="item">Error loading feed: ${FEED}</div>`;
+    }
+  }
+  document.getElementById('feed').innerHTML = html || 'No items found.';
+}
+loadFeeds();
 </script>
 </body>
 </html>
