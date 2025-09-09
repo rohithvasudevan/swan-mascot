@@ -34,14 +34,15 @@
 
   /* Right calendar event list 10% */
   .calendar {
-    flex: 0 0 10%;
-    height: 80%;
-    border-left: 2px solid #ccc;
-    padding: 10px 5px;
-    background: #f9f9f9;
-    display: flex;
-    flex-direction: column;
-  }
+  flex: 0 0 10%;
+  height: 80%;
+  border-left: 2px solid #ccc;
+  padding: 10px 0 10px 5px; /* remove right padding */
+  background: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; /* make it stick to right */
+}
   .calendar h3 {
     font-size: 16px;
     margin: 0 0 10px;
