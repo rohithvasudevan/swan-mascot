@@ -12,7 +12,11 @@
     width: 100vw;
     font-family: Arial, sans-serif;
   }
-
+.event-container {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
   .container {
     display: flex;
     flex-direction: row;
@@ -43,12 +47,8 @@
   flex-direction: column;
   align-items: stretch; /* make it stick to right */
 }
-  .calendar h3 {
-    font-size: 16px;
-    margin: 0 0 10px;
-    text-align: center;
-    flex-shrink: 0;
-  }
+  
+  
   
   #event-list {
     list-style: none;
