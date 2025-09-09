@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>Dashboard with RSS & Swan</title>
+<title>Department-based RSS Dashboard</title>
 <style>
   body {
     margin: 0;
@@ -19,8 +19,11 @@
   .top {
     flex: 7; /* ~70% */
     background: #eee;
-    padding: 20px;
-    overflow-y: auto;
+  }
+  .top iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
   }
 
   .bottom {
@@ -102,12 +105,10 @@
 </style>
 </head>
 <body>
-  <!-- Top Section (inline content instead of iframe) -->
-  <div class="top" id="mainContent">
-    <iframe src="https://crv6uedzggpxuyykhw3tdv.streamlit.app/"
-          width="100%" height="100%" style="border:none;">
-      
-          </iframe>
+  <!-- Top Section -->
+  <div class="top">
+    <!-- Streamlit app -->
+    <iframe src="https://crv6uedzggpxuyykhw3tdv.streamlit.app/"></iframe>
   </div>
 
   <!-- Bottom RSS Section -->
@@ -146,44 +147,75 @@
   window.addEventListener('resize', () => { lastX = window.innerWidth/2; });
 })();
 
-/* RSS Loader */
-function getUserFeeds() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const user = urlParams.get("user") || "default";
+/* Get logged-in user department from SharePoint */
+async function getUserDepartment() {
+  try {
+    const resp = await fetch(
+      "/_api/SP.UserProfiles.PeopleManager/GetMyProperties",
+      {
+        headers: { "Accept": "application/json;odata=nometadata" },
+        credentials: "include"
+      }
+    );
+    const data = await resp.json();
+    return data.Department || "default";
+  } catch (e) {
+    console.error("Error fetching profile:", e);
+    return "default";
+  }
+}
+
+/* Map departments to feeds */
+function getFeedsByDepartment(dept) {
   const feeds = {
-    rohith: [
+    "R&D": [
       "https://www.medtechdive.com/feeds/news",
       "https://www.fiercebiotech.com/rss"
     ],
-    guest: [
-      "https://www.medtechdive.com/feeds/news"
+    "V&V": [
+      "https://www.testandmeasurementtips.com/feed/",
+      "https://www.softwaretestinghelp.com/feed/"
     ],
-    default: [
+    "PMO": [
+      "https://www.projectmanagement.com/rss/gen/PMcom_Headlines",
+      "https://www.pmi.org/learning/rss/ProjectManagement"
+    ],
+    "default": [
       "https://www.medtechdive.com/feeds/news"
     ]
   };
-  return feeds[user] || feeds.default;
+  return feeds[dept] || feeds["default"];
 }
 
+/* Load feeds */
 async function loadFeeds() {
-  const feedList = getUserFeeds();
-  let html = '';
+  const dept = await getUserDepartment();
+  console.log("User department:", dept);
+  const feedList = getFeedsByDepartment(dept);
+
+  let html = "";
   for (let FEED of feedList) {
-    const PROXY = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(FEED);
+    const PROXY = "https://api.allorigins.win/raw?url=" + encodeURIComponent(FEED);
     try {
       const r = await fetch(PROXY);
       const str = await r.text();
-      const xml = new DOMParser().parseFromString(str, 'application/xml');
-      const items = xml.querySelectorAll('item');
+      const xml = new DOMParser().parseFromString(str, "application/xml");
+      const items = xml.querySelectorAll("item");
+
       items.forEach((it, idx) => {
-        if(idx >= 4) return;
-        const title = it.querySelector('title')?.textContent || '';
-        const link = it.querySelector('link')?.textContent || '#';
-        const pub = it.querySelector('pubDate')?.textContent || '';
+        if (idx >= 4) return;
+        const title = it.querySelector("title")?.textContent || "";
+        const link = it.querySelector("link")?.textContent || "#";
+        const pub = it.querySelector("pubDate")?.textContent || "";
         const dateObj = new Date(pub);
-        const pubDate = isNaN(dateObj) ? '' : dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        const desc = (it.querySelector('description')?.textContent || '').replace(/<[^>]*>/g, '').trim();
-        const snippet = desc.split(/\s+/).slice(0, 12).join(' ') + '...';
+        const pubDate = isNaN(dateObj)
+          ? ""
+          : dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        const desc = (it.querySelector("description")?.textContent || "")
+          .replace(/<[^>]*>/g, "")
+          .trim();
+        const snippet = desc.split(/\s+/).slice(0, 12).join(" ") + "...";
+
         html += `<div class="item">
           <h3><a href="${link}" target="_blank">${title}</a></h3>
           <div class="meta">${pubDate}</div>
@@ -195,8 +227,9 @@ async function loadFeeds() {
       html += `<div class="item">Error loading feed: ${FEED}</div>`;
     }
   }
-  document.getElementById('feed').innerHTML = html || 'No items found.';
+  document.getElementById("feed").innerHTML = html || "No items found.";
 }
+
 loadFeeds();
 </script>
 </body>
