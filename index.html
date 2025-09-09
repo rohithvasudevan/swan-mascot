@@ -7,53 +7,53 @@
   body {
     margin: 0;
     padding: 0;
-    display: flex;
     height: 100vh;
     width: 100vw;
     font-family: Arial, sans-serif;
-  }
-.event-container {
-    flex: 1;
     overflow: hidden;
-    position: relative;
   }
+
   .container {
-  display: flex;
-  width: 100%;
-  height: 100%;
-}
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
 
-.main {
-  flex: 1;  /* take all available space */
-  height: 80%;
-  padding: 10px;
-}
-
-.calendar {
-  width: 200px;   /* fixed width instead of 10% */
-  height: 80%;
-  border-left: 2px solid #ccc;
-  padding: 10px 5px;
-  background: #f9f9f9;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
+  /* Main content expands fully */
+  .main {
+    flex: 1;
+    height: 80%;
+    padding: 10px;
+    background: #eee;
+  }
   .main iframe {
     width: 100%;
     height: 100%;
     border: none;
   }
 
- 
+  /* Right upcoming events panel */
+  .calendar {
+    width: 220px; /* fixed width instead of % */
+    height: 80%;
+    border-left: 2px solid #ccc;
+    padding: 10px 5px;
+    background: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
   .calendar h3 {
     font-size: 16px;
     margin: 0 0 10px;
     text-align: center;
     flex-shrink: 0;
   }
-  
-  
+  .event-container {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
   #event-list {
     list-style: none;
     padding: 0;
@@ -76,7 +76,7 @@
     100% { transform: translateY(-100%); }
   }
 
-  /* Bottom RSS 20% */
+  /* Bottom RSS */
   .rss {
     position: absolute;
     bottom: 0;
@@ -88,15 +88,13 @@
     align-items: center;
     border-top: 2px solid #ccc;
   }
-
   .rss-wrapper {
     display: flex;
     gap: 20px;
     white-space: nowrap;
-    animation: scroll-left 60s linear infinite; /* slower scroll */
+    animation: scroll-left 60s linear infinite;
     padding: 10px;
   }
-
   .rss .item {
     min-width: 280px;
     background: #fff;
@@ -107,33 +105,27 @@
     vertical-align: top;
     white-space: normal;
   }
-
   .rss .item h3 {
     font-size: 16px;
     margin: 0 0 6px;
   }
-
   .rss .item h3 a {
     text-decoration: none;
     color: #004c97;
   }
-
   .rss .item h3 a:hover {
     text-decoration: underline;
   }
-
   .rss .meta {
     font-size: 12px;
     color: #777;
     margin-bottom: 6px;
   }
-
   .rss .item p {
     font-size: 14px;
     color: #333;
     margin: 0;
   }
-
   @keyframes scroll-left {
     0%   { transform: translateX(0); }
     100% { transform: translateX(-50%); }
@@ -167,7 +159,8 @@
 <div class="container">
   <!-- Main Section -->
   <div class="main">
-    <iframe src="https://crv6uedzggpxuyykhw3tdv.streamlit.app/"></iframe>
+    <!-- Placeholder iframe (change to your internal link if inside SharePoint) -->
+    <iframe src="https://www.example.com"></iframe>
   </div>
 
   <!-- Calendar Section -->
@@ -221,14 +214,14 @@ async function loadFeeds() {
       const items = xml.querySelectorAll('item');
 
       items.forEach((it, idx) => {
-        if(idx >= 5) return; // limit
+        if(idx >= 5) return;
         const title = it.querySelector('title')?.textContent || '';
         const link = it.querySelector('link')?.textContent || '#';
         const pub = it.querySelector('pubDate')?.textContent || '';
         const dateObj = new Date(pub);
         const pubDate = isNaN(dateObj) ? '' : dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const desc = (it.querySelector('description')?.textContent || '').replace(/<[^>]*>/g, '').trim();
-        const snippet = desc.split(/\s+/).slice(0, 12).join(' ') + '...';
+        const snippet = desc.split(/\\s+/).slice(0, 12).join(' ') + '...';
 
         html += `<div class="item">
           <h3><a href="${link}" target="_blank">${title}</a></h3>
@@ -245,47 +238,23 @@ async function loadFeeds() {
   document.getElementById('feed').innerHTML = html || 'No items found.';
 }
 
-// Mock Event Loader (replace with Calendar API later)
+// Mock events (replace with SharePoint REST API later)
 async function loadEvents() {
-  const siteUrl = "https://bplmedtech.sharepoint.com/sites/rdp";
-  const listName = "Holiday Calendar";
-  const endpoint = `${siteUrl}/_api/web/lists/getbytitle('${listName}')/items?$select=Title,EventDate,EndDate&$orderby=EventDate asc&$top=5`;
-
-  try {
-    const response = await fetch(endpoint, {
-      headers: {
-        "Accept": "application/json;odata=nometadata"
-      },
-      credentials: "include" // use current logged-in user's SharePoint auth
-    });
-
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const data = await response.json();
-    const list = document.getElementById("event-list");
-
-    if (!data.value || data.value.length === 0) {
-      list.innerHTML = "<li>No upcoming events</li>";
-      return;
-    }
-
-    list.innerHTML = data.value.map(ev => {
-      const start = new Date(ev.EventDate);
-      const dateStr = start.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      return `<li><strong>${dateStr}:</strong> ${ev.Title}</li>`;
-    }).join("");
-  } catch (err) {
-    console.error("Error loading events", err);
-    document.getElementById("event-list").innerHTML = "<li>Error loading events</li>";
-  }
+  const events = [
+    { date: "Sep 12", title: "Medical Device Conference" },
+    { date: "Sep 15", title: "Team Meeting" },
+    { date: "Sep 18", title: "Oncology Workshop" },
+    { date: "Sep 21", title: "Biotech Expo" },
+    { date: "Sep 25", title: "Product Launch" }
+  ];
+  const list = document.getElementById("event-list");
+  list.innerHTML = events.map(ev => `<li><strong>${ev.date}:</strong> ${ev.title}</li>`).join("");
 }
-
-
 
 loadFeeds();
 loadEvents();
 
-// Swan Mascot logic
+// Swan mascot movement
 (function(){
   const wrap = document.getElementById('swanWrap');
   const swan = document.getElementById('swanImg');
