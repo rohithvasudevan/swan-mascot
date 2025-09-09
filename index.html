@@ -240,16 +240,42 @@ async function loadFeeds() {
 
 // Mock events (replace with SharePoint REST API later)
 async function loadEvents() {
-  const events = [
-    { date: "Sep 12", title: "Medical Device Conference" },
-    { date: "Sep 15", title: "Team Meeting" },
-    { date: "Sep 18", title: "Oncology Workshop" },
-    { date: "Sep 21", title: "Biotech Expo" },
-    { date: "Sep 25", title: "Product Launch" }
-  ];
-  const list = document.getElementById("event-list");
-  list.innerHTML = events.map(ev => `<li><strong>${ev.date}:</strong> ${ev.title}</li>`).join("");
+  const siteUrl = "https://bplmedtech.sharepoint.com/sites/rdp";
+  const listName = "Holiday Calendar";
+  const endpoint = `${siteUrl}/_api/web/lists/getbytitle('${listName}')/items?$select=Title,EventDate,EndDate&$orderby=EventDate asc&$top=5`;
+
+  try {
+    const response = await fetch(endpoint, {
+      headers: {
+        "Accept": "application/json;odata=nometadata"
+      },
+      credentials: "include"  // IMPORTANT: use logged-in SharePoint credentials
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    const list = document.getElementById("event-list");
+
+    if (!data.value || data.value.length === 0) {
+      list.innerHTML = "<li>No upcoming events</li>";
+      return;
+    }
+
+    list.innerHTML = data.value.map(ev => {
+      const start = new Date(ev.EventDate);
+      const dateStr = start.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric"
+      });
+      return `<li><strong>${dateStr}:</strong> ${ev.Title}</li>`;
+    }).join("");
+  } catch (err) {
+    console.error("Error loading events", err);
+    document.getElementById("event-list").innerHTML = "<li>Error loading events</li>";
+  }
 }
+
 
 loadFeeds();
 loadEvents();
