@@ -38,16 +38,12 @@
 
   /* RSS scrolling */
   .rss-wrapper {
-  display: flex;
-  gap: 20px;
-  white-space: nowrap;
-  padding: 10px;
-  animation: scroll-left linear infinite; /* duration set dynamically */
-}
-@keyframes scroll-left {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
+    display: flex;
+    gap: 20px;
+    white-space: nowrap;
+    animation: scroll-left 45s linear infinite;
+    padding: 10px;
+  }
   .item {
     min-width: 280px;
     background: #fff;
@@ -79,7 +75,10 @@
     color: #333;
     margin: 0;
   }
- 
+  @keyframes scroll-left {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
 
   /* Swan mascot */
   #swanWrap {
@@ -187,25 +186,11 @@ function getFeedsByDepartment(dept) {
   };
   return feeds[dept] || feeds["default"];
 }
-function setAdaptiveScrollSpeed() {
-  const wrapper = document.querySelector('.rss-wrapper');
-  if (!wrapper) return;
 
-  // Measure total width
-  const totalWidth = wrapper.scrollWidth;
-  const viewportWidth = wrapper.parentElement.offsetWidth;
-
-  // Pixels per second speed (adjust if too fast/slow)
-  const speed = 60; // px/sec
-
-  // Duration = total distance / speed
-  const duration = (totalWidth + viewportWidth) / speed;
-
-  wrapper.style.animationDuration = `${duration}s`;
-}
 /* Load feeds */
 async function loadFeeds() {
   const dept = await getUserDepartment();
+  console.log("User department:", dept);
   const feedList = getFeedsByDepartment(dept);
 
   let html = "";
@@ -242,12 +227,10 @@ async function loadFeeds() {
       html += `<div class="item">Error loading feed: ${FEED}</div>`;
     }
   }
-
   document.getElementById("feed").innerHTML = html || "No items found.";
-
-  // Apply adaptive speed
-  setAdaptiveScrollSpeed();
 }
+
+loadFeeds();
 </script>
 </body>
 </html>
