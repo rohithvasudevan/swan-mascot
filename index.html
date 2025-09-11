@@ -15,9 +15,8 @@
     overflow: hidden;
   }
 
-  /* Layout split */
   .top {
-    flex: 7; /* ~70% */
+    flex: 7;
     background: #eee;
   }
   .top iframe {
@@ -27,7 +26,7 @@
   }
 
   .bottom {
-    flex: 3; /* ~30% */
+    flex: 3;
     background: #f4f4f4;
     border-top: 2px solid #ccc;
     overflow: hidden;
@@ -36,12 +35,11 @@
     align-items: center;
   }
 
-  /* RSS scrolling */
   .rss-wrapper {
     display: flex;
     gap: 20px;
     white-space: nowrap;
-    animation: scroll-left 45s linear infinite;
+    animation: scroll-left 20s linear infinite;
     padding: 10px;
   }
   .item {
@@ -80,7 +78,6 @@
     100% { transform: translateX(-50%); }
   }
 
-  /* Swan mascot */
   #swanWrap {
     position: fixed;
     bottom: 8px;
@@ -107,7 +104,6 @@
 <body>
   <!-- Top Section -->
   <div class="top">
-    <!-- Streamlit app -->
     <iframe src="https://crv6uedzggpxuyykhw3tdv.streamlit.app/"></iframe>
   </div>
 
@@ -147,24 +143,6 @@
   window.addEventListener('resize', () => { lastX = window.innerWidth/2; });
 })();
 
-/* Get logged-in user department from SharePoint */
-async function getUserDepartment() {
-  try {
-    const resp = await fetch(
-      "/_api/SP.UserProfiles.PeopleManager/GetMyProperties",
-      {
-        headers: { "Accept": "application/json;odata=nometadata" },
-        credentials: "include"
-      }
-    );
-    const data = await resp.json();
-    return data.Department || "default";
-  } catch (e) {
-    console.error("Error fetching profile:", e);
-    return "default";
-  }
-}
-
 /* Map departments to feeds */
 function getFeedsByDepartment(dept) {
   const feeds = {
@@ -189,8 +167,8 @@ function getFeedsByDepartment(dept) {
 
 /* Load feeds */
 async function loadFeeds() {
-  const dept = await getUserDepartment();
-  console.log("User department:", dept);
+  const dept = "R&D"; // 🔹 Hardcoded department
+  console.log("Using department:", dept);
   const feedList = getFeedsByDepartment(dept);
 
   let html = "";
