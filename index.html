@@ -2,114 +2,138 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>Department-based RSS Dashboard</title>
+<title>Dashboard with Swan + RSS</title>
 <style>
-  body {
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    width: 100vw;
+  html,body{
+    height:100%;
+    margin:0;
     font-family: "Open Sans", Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    background:#fafafa;
+  }
+  .container {
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
   }
 
+  /* Top Section (Streamlit) */
   .top {
-    flex: 7;
-    background: #eee;
+    flex:7;
+    position:relative;
+    background:#eee;
   }
-  .top iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
+  .top iframe{
+    width:100%;
+    height:100%;
+    border:0;
+    display:block;
+  }
+  /* Transparent overlay to catch mouse movement */
+  #overlay {
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:transparent;
+    z-index:10; /* higher than iframe */
   }
 
+  /* Bottom Section (RSS) */
   .bottom {
-    flex: 3;
-    background: #f4f4f4;
-    border-top: 2px solid #ccc;
-    overflow: hidden;
-    position: relative;
-    display: flex;
-    align-items: center;
+    flex:3;
+    background:#f9f9f9;
+    border-top:2px solid #ddd;
+    display:flex;
+    align-items:center;
+    overflow:hidden;
   }
-
-  .rss-wrapper {
-    display: flex;
-    gap: 20px;
-    white-space: nowrap;
-    animation: scroll-left 20s linear infinite;
-    padding: 10px;
+  .rss-track {
+    display:flex;
+    width:max-content;
+    animation: scroll-left 40s linear infinite;
+    padding:16px;
+    gap:20px;
   }
-  .item {
-    min-width: 280px;
-    background: #fff;
-    border-radius: 12px;
-    padding: 14px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    display: inline-block;
-    vertical-align: top;
-    white-space: normal;
+  .rss-track.paused { animation-play-state: paused; }
+  .rss-card {
+    min-width:280px;
+    max-width:280px;
+    border-radius:12px;
+    background:#fff;
+    box-shadow:0 6px 14px rgba(0,0,0,0.12);
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+    transition: transform .2s ease;
   }
-  .item h3 {
-    font-size: 16px;
-    margin: 0 0 6px;
+  .rss-card:hover { transform: translateY(-6px); }
+  .rss-card h3 {
+    font-size:15px;
+    margin:0 0 10px;
+    line-height:1.3;
   }
-  .item h3 a {
-    text-decoration: none;
-    color: #004c97;
+  .rss-card h3 a {
+    text-decoration:none;
+    color:#222;
   }
-  .item h3 a:hover {
-    text-decoration: underline;
+  .rss-card h3 a:hover { text-decoration:underline; }
+  .rss-card p {
+    font-size:13px;
+    color:#444;
+    margin:0 0 8px;
+    line-height:1.4;
   }
   .meta {
-    font-size: 12px;
-    color: #777;
-    margin-bottom: 6px;
-  }
-  .item p {
-    font-size: 14px;
-    color: #333;
-    margin: 0;
+    font-size:12px;
+    color:#777;
+    margin-top:auto;
   }
   @keyframes scroll-left {
     0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    100% { transform: translateX(-50%); } /* half (original + clone) */
   }
 
-  #swanWrap {
-    position: fixed;
-    bottom: 8px;
-    left: 50%;
+  /* Swan mascot */
+  #swanWrap{
+    position:fixed;
+    bottom:12px;
+    left:50%;
     transform: translateX(-50%);
-    transition: left .35s cubic-bezier(.2,.8,.2,1);
-    width: 120px;
-    height: 80px;
-    pointer-events: none;
+    width:120px;
+    height:80px;
+    pointer-events:none;
+    z-index:9999;
+    transition:left .22s cubic-bezier(.2,.8,.2,1);
     animation: bob 4s ease-in-out infinite;
   }
   @keyframes bob {
-    0% { transform:translateX(-50%) translateY(0); }
-    50% { transform:translateX(-50%) translateY(-8px); }
-    100% { transform:translateX(-50%) translateY(0); }
+    0% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-8px); }
+    100% { transform: translateX(-50%) translateY(0); }
   }
-  #swanImg {
-    width: 120px;
-    display: block;
-    transition: transform .22s linear;
+  #swanImg{
+    width:100%;
+    height:100%;
+    display:block;
+    transform-origin:center;
+    transition: transform .18s linear;
   }
 </style>
 </head>
 <body>
-  <!-- Top Section -->
-  <div class="top">
-    <iframe src="https://crv6uedzggpxuyykhw3tdv.streamlit.app/"></iframe>
-  </div>
+  <div class="container">
+    <!-- TOP: Streamlit -->
+    <div class="top">
+      <iframe id="streamIframe" src="https://crv6uedzggpxuyykhw3tdv.streamlit.app/" title="Streamlit app"></iframe>
+      <div id="overlay"></div> <!-- transparent overlay -->
+    </div>
 
-  <!-- Bottom RSS Section -->
-  <div class="bottom">
-    <div class="rss-wrapper" id="feed">Loading feed...</div>
+    <!-- BOTTOM: RSS -->
+    <div class="bottom">
+      <div class="rss-track" id="feed">Loading feed...</div>
+    </div>
   </div>
 
   <!-- Swan Mascot -->
@@ -118,61 +142,48 @@
   </div>
 
 <script>
-/* Swan movement */
+/* ---------------- Swan Movement ---------------- */
 (function(){
   const wrap = document.getElementById('swanWrap');
   const swan = document.getElementById('swanImg');
-  let lastX = window.innerWidth/2;
+  const overlay = document.getElementById('overlay');
+
+  let lastX = window.innerWidth * 0.5;
   let leftPct = 50;
   const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 
-  function onMove(clientX){
-    const delta = clientX - lastX;
-    if(Math.abs(delta) < 4){ lastX = clientX; return; }
+  function onMove(globalClientX){
+    if(typeof globalClientX !== "number") return;
+    const delta = globalClientX - lastX;
+    if(Math.abs(delta) < 2){ lastX = globalClientX; return; }
+
     swan.style.transform = (delta < 0) ? 'scaleX(-1)' : 'scaleX(1)';
-    leftPct += (delta / window.innerWidth) * 100 * 0.8;
+    leftPct += (delta / window.innerWidth) * 100 * 0.9;
     leftPct = clamp(leftPct, 6, 94);
     wrap.style.left = leftPct + '%';
-    lastX = clientX;
+    lastX = globalClientX;
   }
 
+  // Normal mousemove
   document.addEventListener('mousemove', e => onMove(e.clientX), {passive:true});
   document.addEventListener('touchmove', e => {
     if(e.touches && e.touches[0]) onMove(e.touches[0].clientX);
   }, {passive:true});
-  window.addEventListener('resize', () => { lastX = window.innerWidth/2; });
+
+  // Overlay also captures movement (so swan works above Streamlit)
+  overlay.addEventListener('mousemove', e => onMove(e.clientX), {passive:true});
 })();
+</script>
 
-/* Map departments to feeds */
-function getFeedsByDepartment(dept) {
-  const feeds = {
-    "R&D": [
-      "https://www.medtechdive.com/feeds/news",
-      "https://www.fiercebiotech.com/rss"
-    ],
-    "V&V": [
-      "https://www.testandmeasurementtips.com/feed/",
-      "https://www.softwaretestinghelp.com/feed/"
-    ],
-    "PMO": [
-      "https://www.projectmanagement.com/rss/gen/PMcom_Headlines",
-      "https://www.pmi.org/learning/rss/ProjectManagement"
-    ],
-    "default": [
-      "https://www.medtechdive.com/feeds/news"
-    ]
-  };
-  return feeds[dept] || feeds["default"];
-}
+<script>
+/* ---------------- RSS Loader ---------------- */
+const FEEDS = [
+  "https://www.medtechdive.com/feeds/news"
+];
 
-/* Load feeds */
 async function loadFeeds() {
-  const dept = "R&D"; // 🔹 Hardcoded department
-  console.log("Using department:", dept);
-  const feedList = getFeedsByDepartment(dept);
-
-  let html = "";
-  for (let FEED of feedList) {
+  let cards = "";
+  for (const FEED of FEEDS) {
     const PROXY = "https://api.allorigins.win/raw?url=" + encodeURIComponent(FEED);
     try {
       const r = await fetch(PROXY);
@@ -181,32 +192,39 @@ async function loadFeeds() {
       const items = xml.querySelectorAll("item");
 
       items.forEach((it, idx) => {
-        if (idx >= 4) return;
+        if (idx >= 6) return; // 6 max
         const title = it.querySelector("title")?.textContent || "";
         const link = it.querySelector("link")?.textContent || "#";
         const pub = it.querySelector("pubDate")?.textContent || "";
         const dateObj = new Date(pub);
-        const pubDate = isNaN(dateObj)
-          ? ""
-          : dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        const desc = (it.querySelector("description")?.textContent || "")
-          .replace(/<[^>]*>/g, "")
-          .trim();
-        const snippet = desc.split(/\s+/).slice(0, 12).join(" ") + "...";
+        const pubDate = isNaN(dateObj) ? "" : dateObj.toLocaleDateString("en-US", { month:"short", day:"numeric" });
 
-        html += `<div class="item">
-          <h3><a href="${link}" target="_blank">${title}</a></h3>
-          <div class="meta">${pubDate}</div>
-          <p>${snippet}</p>
-        </div>`;
+        let desc = (it.querySelector("description")?.textContent || "")
+          .replace(/<[^>]*>/g,"")
+          .trim();
+        const snippet = desc.split(/\s+/).slice(0,18).join(" ") + "...";
+
+        cards += `
+          <div class="rss-card">
+            <h3><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></h3>
+            <p>${snippet}</p>
+            <div class="meta">${pubDate}</div>
+          </div>`;
       });
     } catch (err) {
       console.error(err);
-      html += `<div class="item">Error loading feed: ${FEED}</div>`;
+      cards += `<div class="rss-card"><p>Error loading ${FEED}</p></div>`;
     }
   }
-  document.getElementById("feed").innerHTML = html || "No items found.";
+
+  // Duplicate cards for seamless scroll
+  document.getElementById("feed").innerHTML = cards + cards;
 }
+
+// Pause scroll on hover
+const track = document.getElementById("feed");
+track.addEventListener("mouseenter", () => track.classList.add("paused"));
+track.addEventListener("mouseleave", () => track.classList.remove("paused"));
 
 loadFeeds();
 </script>
