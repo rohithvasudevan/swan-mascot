@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Links Hub</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      width: 90%;
+      background: rgba(255,255,255,0.1);
+      padding: 30px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.2em;
+      margin-bottom: 20px;
+    }
+    p {
+      margin-bottom: 30px;
+      font-size: 1.1em;
+    }
+    .links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    .link-card {
+      background: #fff;
+      color: #333;
+      padding: 20px;
+      border-radius: 15px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    }
+    .link-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.25);
+    }
+    .link-card span {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.9em;
+      font-weight: normal;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌐 My Links Dashboard</h1>
+    <p>Quick access to my favorite sites</p>
+
+    <div class="links">
+      <a href="https://www.bplmedicaltechnologies.com/" class="link-card" target="_blank">
+        BPL Medical Technologies <span>Happier Living Everyday</span>
+      </a>
+      <a href="https://dashboardbpl-s6hgszkdbr4h3m7zmdj5af.streamlit.app/" class="link-card" target="_blank">
+        BPL Dashboard <span>All Projects Dashboard</span>
+      </a>
+      <a href="http://192.168.10.205:3000/" class="link-card" target="_blank">
+        BPL Commander <span>Resource Allocation Dashboard</span>
+      </a>
+      <a href="https://sl1nk.com/WB0Ug" class="link-card" target="_blank">
+        Standards <span>Refer to Standards here</span>
+      </a>
+	  <a href="" class="link-card" target="_blank">
+        QARA <span>Link to QNAP Server</span>
+      </a>
+    </div>
+  </div>
+</body>
+</html>
