@@ -197,8 +197,19 @@ async function loadFeeds() {
   // ✅ Detect SharePoint user
   let userLogin = "guest";
   try {
-    userLogin = _spPageContextInfo?.userLoginName || "guest";
-    console.log("Current SharePoint User:", userLogin);
+    fetch(`${_spPageContextInfo.webAbsoluteUrl}/_api/web/currentuser`, {
+  headers: {
+    "Accept": "application/json;odata=verbose"
+  },
+  credentials: "same-origin"
+})
+.then(response => response.json())
+.then(data => {
+  console.log("User detected:", data.d.Title);
+})
+.catch(error => {
+  console.error("Error detecting user:", error);
+});
   } catch (e) {
     console.warn("SharePoint user not detected, using guest.");
   }
