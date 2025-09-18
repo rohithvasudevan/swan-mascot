@@ -17,7 +17,7 @@
     overflow:hidden;
   }
 
-  /* Top Section (Streamlit / Logo) */
+  /* Top Section */
   .top {
     flex:7;
     display:flex;
@@ -34,7 +34,6 @@
     border:0;
     display:block;
   }
-  /* Transparent overlay for swan movement */
   #overlay {
     position:absolute;
     top:0;
@@ -97,7 +96,7 @@
   }
   @keyframes scroll-left {
     0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); } /* half (original + clone) */
+    100% { transform: translateX(-50%); }
   }
 
   /* Swan mascot */
@@ -129,7 +128,7 @@
 </head>
 <body>
   <div class="container">
-    <!-- TOP: Streamlit or Logo -->
+    <!-- TOP: Logo or Streamlit embed -->
     <div class="top">
       <img id="BPLLogo" src="bpl.gif" alt="Swan Mascot">
       <div id="overlay"></div>
@@ -178,7 +177,7 @@
 </script>
 
 <script>
-/* ---------------- RSS Loader with AI Agent ---------------- */
+/* ---------------- RSS Loader with AI Backend ---------------- */
 
 async function getFeedsForUser(userLogin) {
   try {
@@ -188,7 +187,6 @@ async function getFeedsForUser(userLogin) {
     return data.feeds || [];
   } catch (err) {
     console.error("Error fetching feeds from AI agent:", err);
-    // fallback to a default feed
     return ["https://www.medtechdive.com/feeds/news"];
   }
 }
@@ -196,17 +194,16 @@ async function getFeedsForUser(userLogin) {
 async function loadFeeds() {
   let cards = "";
 
-  // ✅ Get SharePoint logged-in user
-  let userLogin = "";
+  // ✅ Detect SharePoint user
+  let userLogin = "guest";
   try {
     userLogin = _spPageContextInfo?.userLoginName || "guest";
     console.log("Current SharePoint User:", userLogin);
   } catch (e) {
-    console.warn("Unable to detect SharePoint user, defaulting.");
-    userLogin = "guest";
+    console.warn("SharePoint user not detected, using guest.");
   }
 
-  // ✅ Ask AI agent for personalized feeds
+  // ✅ Get personalized feeds from backend
   const FEEDS = await getFeedsForUser(userLogin);
 
   for (const FEED of FEEDS) {
@@ -243,6 +240,7 @@ async function loadFeeds() {
     }
   }
 
+  // Duplicate cards for seamless scroll
   document.getElementById("feed").innerHTML = cards + cards;
 }
 
