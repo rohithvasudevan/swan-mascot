@@ -1,0 +1,10 @@
+<h2>Search People in BPL</h2>
+<input type="text" id="searchBox" placeholder="Enter name..." />
+<button onclick="searchPeople()">Search</button>
+
+<script>
+function searchPeople() {
+  var query = document.getElementById("searchBox").value;
+  window.location.href = "https://bplmedtech.sharepoint.com/_layouts/15/search.aspx/people?q=" + encodeURIComponent(query);
+}
+</script>
