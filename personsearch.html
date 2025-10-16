@@ -6,5 +6,7 @@
 function searchPeople() {
   var query = document.getElementById("searchBox").value;
   window.location.href = "https://bplmedtech.sharepoint.com/_layouts/15/search.aspx/people?q=" + encodeURIComponent(query);
+  window.open(url, '_blank');
 }
+
 </script>
